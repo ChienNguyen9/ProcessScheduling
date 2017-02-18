@@ -94,10 +94,16 @@ void coreRequest(data *pro, int &point, int processCount) {
   }
 }
 
-void inputCompletion(int doneProcessor, string &status, int processCount, data *pro) {
+void inputCompletion(int doneProcessor, string &status, int processCount, data *pro, int &count) {
   cout << endl;
+  count++;
   cout << "Process " << doneProcessor << " terminated at t = " << currentTime << endl;
-  cout << "Number of busy cores: " << ncores << endl;
+  cout << "Number of busy cores: ";
+  if(processCount == count) {
+    cout << "0" << endl;
+  }else{
+    cout << ncores << endl;
+  }
   cout << "Ready queue contains: ";
   if(readyCount == 0) {
     cout << "--" << endl;
@@ -133,7 +139,7 @@ void inputCompletion(int doneProcessor, string &status, int processCount, data *
 
 int main() {
   string tempProcess, status = "RUNNING";
-  int tempTime, processCount = -1, count1 = 0, requestTime = 0;
+  int tempTime, processCount = -1, count = -1, count1 = 0, requestTime = 0;
   int nInputLines = 0, point = 0;
   const int MAXLINES = 2048;
   int tracker[64];
@@ -185,7 +191,7 @@ int main() {
   while(status == "RUNNING") {
     for(int r = 0; r <= processCount; r++) {
       if(processor[r].place == tracker[r]) {
-        inputCompletion(r, status, processCount, processor);
+        inputCompletion(r, status, processCount, processor, count);
       }
     }
     coreRequest(processor, point, processCount);
