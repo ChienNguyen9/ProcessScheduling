@@ -4,17 +4,15 @@
 
 #include <iostream>
 #include <string>
-#include <stdlib.h>
 
 using namespace std;
 
 int currentTime = 0, count2 = -1;
-int ncores = 0, slice = 0;
+int ncores = 0, ncores1 = 0, slice = 0;
 int diskCount = 0, readyCount = 0;
 
 struct data {
   string state;
-  string location;
   int place;
   string process[100];
   int timeExe[100];
@@ -23,12 +21,12 @@ struct data {
 void getState(data *pro, int processCount){
   for(int i = 0; i <= processCount; i++) {
     if((pro[i].state != "TERMINATED") && (pro[i].timeExe[0] <= currentTime)) {
-      if(pro[i].process[pro[i].place] == "CORE") {
+      if((pro[i].process[pro[i].place] == "CORE") || ((pro[i].process[pro[i+1].place] == ""))) {
         pro[i].state = "RUNNING";
-      }else if(pro[i].process[pro[i].place] == "DISK") {
-        pro[i].state = "READY";
-      }else{
+      }else if((pro[i].process[pro[i].place] == "DISPLAY") || (pro[i].process[pro[i].place] == "INPUT")) {
         pro[i].state = "BLOCKED";
+      }else{
+        pro[i].state = "READY";
       }
     }
   }
@@ -36,26 +34,21 @@ void getState(data *pro, int processCount){
 
 void coreRequest(data *pro, int &point, int processCount) {
   if(pro[point].state != "TERMINATED") {
-    /*
-    if(((pro[point].process[pro[point].place] == "DISPLAY") || (pro[point].process[pro[point].place] == "INPUT")) && pro[point].timeExe[pro[point].place] == 0) {
-      int number;
-      cout << "Process " << point << " -- Enter time execution for display/input: ";
-      cin.clear();
-      cin.sync();
-      cin >> number;
-      pro[point].timeExe[pro[point].place] = number;
-      cout << endl;
-    }
-    */
     if(ncores > 0) {
-      if(pro[point].timeExe[pro[point].place] <= slice) {
-        // ncores--;
-        currentTime += pro[point].timeExe[pro[point].place];
-        pro[point].place += 1;
-      }else{
-        // ncores--;
-        currentTime += slice;
-        pro[point].timeExe[pro[point].place] -= slice;
+      if(pro[point].timeExe[pro[point].place] >= 0) {
+        if(ncores1 >= 0 || ncores1 < ncores) {
+          ncores1++;
+        }
+        if(pro[point].timeExe[pro[point].place] <= slice) {
+          currentTime += pro[point].timeExe[pro[point].place];
+          pro[point].place += 1;
+          if(ncores1 > 0) {
+            ncores1--;
+          }
+        }else{
+          currentTime += slice;
+          pro[point].timeExe[pro[point].place] -= slice;
+        }
       }
     }
   }
@@ -96,14 +89,13 @@ void coreRequest(data *pro, int &point, int processCount) {
 
 void inputCompletion(int doneProcessor, string &status, int processCount, data *pro, int &count) {
   cout << endl;
+  count2++;
   count++;
   cout << "Process " << doneProcessor << " terminated at t = " << currentTime << endl;
-  cout << "Number of busy cores: ";
-  if(processCount == count) {
-    cout << "0" << endl;
-  }else{
-    cout << ncores << endl;
+  if(processCount == count2) {
+    ncores1 = 0;
   }
+  cout << "Number of busy cores: " << ncores1 << endl;
   cout << "Ready queue contains: ";
   if(readyCount == 0) {
     cout << "--" << endl;
@@ -129,7 +121,6 @@ void inputCompletion(int doneProcessor, string &status, int processCount, data *
     }
   }
 
-  count2++;
   pro[doneProcessor].place += 1;
   if(processCount <= count2) {
     status = "STOP";
